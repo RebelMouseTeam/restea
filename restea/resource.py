@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import collections
+import collections.abc
 
 import restea.errors as errors
 import restea.formats as formats
@@ -193,7 +194,7 @@ class Resource(object):
                 'Fail to load the data'
             )
 
-        if not isinstance(payload_data, collections.Mapping):
+        if not isinstance(payload_data, collections.abc.Mapping):
             raise errors.BadRequestError(
                 'Data should be key -> value structure'
             )
