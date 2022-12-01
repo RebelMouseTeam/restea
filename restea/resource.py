@@ -1,12 +1,12 @@
 from __future__ import unicode_literals
 
 import collections
+import collections.abc
+
 import restea.errors as errors
 import restea.formats as formats
 import restea.fields as fields
 
-
-# TODO: Add fileds with validation
 
 class Resource(object):
     '''
@@ -35,6 +35,7 @@ class Resource(object):
 
         self.request = request
         self.formatter = formatter
+        self._response_headers = collections.OrderedDict()
 
     def _iden_required(self, method_name):
         '''
@@ -47,7 +48,7 @@ class Resource(object):
         '''
         return method_name not in ('list', 'create')
 
-    def _match_responce_to_fields(self, dct):
+    def _match_response_to_fields(self, dct):
         '''
         Filters output from rest method to return only fields matching
         self.fields
@@ -70,7 +71,7 @@ class Resource(object):
         :returns: filtered list, with no values out of self.fields
         :rtype: generator
         '''
-        return (self._match_responce_to_fields(item) for item in lst)
+        return (self._match_response_to_fields(item) for item in lst)
 
     def _apply_decorators(self, method):
         '''
@@ -171,10 +172,12 @@ class Resource(object):
             )
         return getattr(type(self), method_name)
 
-    def _get_payload(self):
+    def _get_payload(self, method_name):
         '''
         Returns a validated and parsed payload data for request
 
+        :param method_name: name of the method
+        :type method_name: str
         :raises restea.errors.BadRequestError: unparseable data
         :raises restea.errors.BadRequestError: payload is not mappable
         :raises restea.errors.BadRequestError: validation of fields not passed
@@ -191,17 +194,23 @@ class Resource(object):
                 'Fail to load the data'
             )
 
-        if not isinstance(payload_data, collections.Mapping):
+        if not isinstance(payload_data, collections.abc.Mapping):
             raise errors.BadRequestError(
                 'Data should be key -> value structure'
             )
 
         try:
-            return self.fields.validate(payload_data)
+            return self.fields.validate(method_name, payload_data)
         except fields.FieldSet.Error as e:
-            raise errors.BadRequestError(e)
+            raise errors.BadRequestError(str(e))
         except fields.FieldSet.ConfigurationError as e:
-            raise errors.ServerError(e)
+            raise errors.ServerError(str(e))
+
+    def prepare(self):
+        pass
+
+    def finish(self, response):
+        return response
 
     def process(self, *args, **kwargs):
         '''
@@ -218,19 +227,17 @@ class Resource(object):
         if not self._is_valid_formatter:
             raise errors.BadRequestError('Not recognizable format')
 
-        self.payload = self._get_payload()
-
         method_name = self._get_method_name(has_iden=bool(args or kwargs))
+        self.payload = self._get_payload(method_name)
         method = self._get_method(method_name)
         method = self._apply_decorators(method)
 
-        try:
-            res = method(self, *args, **kwargs)
-        except errors.RestError:
-            raise
+        self.prepare()
+        response = method(self, *args, **kwargs)
+        response = self.finish(response)
 
         try:
-            return self.formatter.serialize(res)
+            return self.formatter.serialize(response)
         except formats.LoadError:
             raise errors.ServerError('Service can\'t respond with this format')
 
@@ -239,22 +246,39 @@ class Resource(object):
         Dispatches the request and handles exception to return data, status
         and content type
 
-        :returns: 3 element tuple: result, HTTP status code and content type
+        :returns: 4-element tuple: result, HTTP status code, content type, and
+        headers
         :rtype: tuple
         '''
         try:
             return (
                 self.process(*args, **kwargs),
                 200,
-                self.formatter.content_type
+                self.formatter.content_type,
+                self._response_headers
             )
         except errors.RestError as e:
-            err = {'error': str(e)}
-            if e.code:
-                err.update({'code': e.code})
+            err = e.info.copy()
+            err['error'] = str(e)
 
             return (
                 self._error_formatter.serialize(err),
                 e.http_code,
-                self._error_formatter.content_type
+                self._error_formatter.content_type,
+                self._response_headers
             )
+
+    def set_header(self, name, value):
+        '''
+        Sets the given response header name and value.
+        :param name: string -- header name
+        :param value: string -- header value
+        '''
+        self._response_headers[name] = value
+
+    def clear_header(self, name):
+        '''
+        Clears an outgoing header.
+        :param name: string -- header name
+        '''
+        self._response_headers.pop(name, None)

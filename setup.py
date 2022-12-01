@@ -1,18 +1,13 @@
 from setuptools import setup
 
-f = open("README.rst")
-try:
-    try:
-        readme_content = f.read()
-    except:
-        readme_content = ""
-finally:
-    f.close()
+readme_content = ''
+with open("README.rst") as f:
+    readme_content = f.read()
 
 setup(
     name='restea',
     packages=['restea', 'restea.adapters'],
-    version='0.3.4',
+    version='0.4.0',
     description='Simple RESTful server toolkit',
     long_description=readme_content,
     author='Walery Jadlowski',
@@ -20,15 +15,13 @@ setup(
     url='https://github.com/bodbdigr/restea',
     keywords=['rest', 'restful', 'restea'],
     install_requires=[
-        'future==0.16.0',
-    ],
-    setup_requires=[
-        'pytest-runner',
+        'six==1.16.0',
     ],
     tests_require=[
-        'pytest==3.0.7',
-        'pytest-cov==2.4.0',
-        'pytest-mock==1.5.0',
+        'pytest==4.6.11',
+        'pytest-cov==2.12.0',
+        'pytest-mock==2.0.0',
+        'mock==3.0.5',
     ],
     license='MIT',
     classifiers=[
@@ -39,6 +32,8 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Internet :: WWW/HTTP',

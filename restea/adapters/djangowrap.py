@@ -1,6 +1,7 @@
-import restea.formats as formats
+import six
+
 from django.http import HttpResponse
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from restea.adapters.base import (
     BaseResourceWrapper,
@@ -54,28 +55,19 @@ class DjangoResourceRouter(BaseResourceWrapper):
     Wraps over Django views, implements Django view API and creates routing in
     the Django urlrouter format
     '''
+    request_wrapper_class = DjangoRequestWrapper
 
-    def wrap_request(self, request, *args, **kwargs):
-        '''
-        Prepares data and pass control to `restea.Resource` object
-
-        :returns: :class: `django.http.HttpResponse`
-        '''
-        data_format, kwargs = self._get_format_name(kwargs)
-        formatter = formats.get_formatter(data_format)
-
-        resource = self._resource_class(
-            DjangoRequestWrapper(request), formatter
-        )
-        res, status_code, content_type = resource.dispatch(*args, **kwargs)
-
-        return HttpResponse(
-            res,
+    def prepare_response(self, content, status_code, content_type, headers):
+        response = HttpResponse(
+            content,
             content_type=content_type,
             status=status_code
         )
+        for name, value in six.iteritems(headers):
+            response[name] = value
+        return response
 
-    def get_routes(self, path='', iden_format='(?P<iden>\w+)'):
+    def get_routes(self, path='', iden_format=r'(?P<iden>\w+)'):
         '''
         Prepare routes for the given REST resource
 
@@ -83,8 +75,7 @@ class DjangoResourceRouter(BaseResourceWrapper):
         :param iden: string -- format for identifier, for instance might be
         used to make composite identifier
         '''
-        return patterns(
-            '',
+        return [
             url(
                 r'^{}(?:\.(?P<data_format>\w+))?$'.format(path),
                 self.wrap_request
@@ -94,4 +85,4 @@ class DjangoResourceRouter(BaseResourceWrapper):
                     path, iden_format),
                 self.wrap_request
             )
-        )
+        ]
