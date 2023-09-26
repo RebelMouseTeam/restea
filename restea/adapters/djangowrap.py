@@ -1,7 +1,7 @@
 import six
 
 from django.http import HttpResponse
-from django.conf.urls import url
+from django.urls import re_path
 
 from restea.adapters.base import (
     BaseResourceWrapper,
@@ -76,11 +76,11 @@ class DjangoResourceRouter(BaseResourceWrapper):
         used to make composite identifier
         '''
         return [
-            url(
+            re_path(
                 r'^{}(?:\.(?P<data_format>\w+))?$'.format(path),
                 self.wrap_request
             ),
-            url(
+            re_path(
                 r'^{}/{}(?:\.(?P<data_format>\w+))?$'.format(
                     path, iden_format),
                 self.wrap_request
