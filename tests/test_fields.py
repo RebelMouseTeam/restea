@@ -364,6 +364,14 @@ def test_datetime_validate_non_acceptable_value():
         assert 'Field "foo" can\'t be parsed' in str(e)
 
 
+def test_datetime_validate_valueerror_out_of_range():
+    f = DateTime()
+    f.set_name('foo')
+    with pytest.raises(FieldSet.Error) as e:
+        f._validate_field(16933806600000)
+    assert 'Field "foo" can\'t be parsed' in str(e)
+
+
 def test_datetime_validate_acceptable_value_not_ms_precision():
     f = DateTime(ms_precision=False)
     expected_date = datetime.datetime(2015, 10, 6, 16, 29, 19)

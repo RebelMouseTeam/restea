@@ -356,7 +356,7 @@ class DateTime(Field):
             if self.__ms_precision:
                 field_value /= 1000.00
             return datetime.datetime.utcfromtimestamp(field_value)
-        except TypeError:
+        except (TypeError, ValueError):
             raise FieldSet.Error(
                 'Field "{}" can\'t be parsed'.format(self._name)
             )
