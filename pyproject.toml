@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
 
 [project]
@@ -54,10 +54,10 @@ Homepage = "https://github.com/bodbdigr/restea"
 Repository = "https://github.com/bodbdigr/restea"
 
 [tool.hatch.version]
-source = "vcs"
+source = "uv-dynamic-versioning"
 
-[tool.hatch.build.hooks.vcs]
-version-file = "restea/_version.py"
+[tool.uv-dynamic-versioning]
+fallback-version = "0.0.0"
 
 [tool.hatch.build.targets.sdist]
 include = [

@@ -10,4 +10,3 @@ build/
 *.egg-info/
 .venv/
 .python-version
-restea/_version.py

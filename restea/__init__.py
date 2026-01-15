@@ -1,4 +1,6 @@
+import importlib.metadata
+
 try:
-    from restea._version import __version__
-except ImportError:
-    __version__ = "0.0.0.dev0"
+    __version__ = importlib.metadata.version(__name__)
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.0.0"
