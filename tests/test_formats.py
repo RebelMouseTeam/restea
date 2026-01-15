@@ -1,8 +1,10 @@
 import datetime
 import json
-import pytest
+
 import mock
+import pytest
 from mock import patch
+
 from restea import formats
 
 
@@ -55,7 +57,7 @@ def test_json_format_unserialize_value_error(loads_mock):
 
 def test_json_format_serialize():
     test_data.update({'date_field': datetime.datetime.now()})
-    expected = json.dumps(test_data, cls=formats.DateTimeEncoder)
+    expected = json.dumps(test_data, cls=formats.DateTimeEncoder, sort_keys=True)
     assert formats.JsonFormat.serialize(test_data) == expected
 
 

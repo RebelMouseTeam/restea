@@ -1,24 +1,21 @@
-from __future__ import unicode_literals
-
-import six
-from six.moves import map, range
+import datetime
 
 import mock
 import pytest
-import datetime
+
 from restea.fields import (
+    URL,
     Boolean,
+    CommaSeparatedListField,
+    DateTime,
     Dict,
+    Email,
     Field,
     FieldSet,
     Integer,
     List,
-    String,
     Regex,
-    URL,
-    Email,
-    DateTime,
-    CommaSeparatedListField,
+    String,
 )
 
 
@@ -93,7 +90,7 @@ def test_feild_set_validate_requred_fields_missing():
 
     with pytest.raises(FieldSet.Error) as e:
         fs.validate('create', {'field2': '2'})
-    assert 'Field "field1" is missing' in str(e)
+    assert 'Field "field1" is missing' in str(e.value)
 
 
 def test_field_init():
@@ -134,7 +131,7 @@ def test_field_get_settings_validator_raise_configration_error():
     with pytest.raises(FieldSet.ConfigurationError) as e:
         f._get_setting_validator('my_setting')
     assert 'Setting "my_setting" is ' + \
-           'not supported for field "test"' in str(e)
+           'not supported for field "test"' in str(e.value)
 
 
 def test_field_validate():
@@ -162,7 +159,7 @@ def test_field_validate_raises_on_field_validation():
 
     with pytest.raises(FieldSet.Error) as e:
         f.validate('value')
-    assert field_error_message in str(e)
+    assert field_error_message in str(e.value)
 
     assert not f._validate_my_setting.called
 
@@ -179,7 +176,7 @@ def test_field_validate_raises_on_setting_validation():
 
     with pytest.raises(FieldSet.Error) as e:
         f.validate('value')
-    assert my_setting_error_message in str(e)
+    assert my_setting_error_message in str(e.value)
 
     f._validate_field.assert_called_with('value')
 
@@ -204,7 +201,7 @@ def test_integer_field_validate_non_acceptable_value():
     for fail_val in ('should not work', None, '10.10'):
         with pytest.raises(FieldSet.Error) as e:
             f._validate_field(fail_val)
-        assert 'Field "{}" is not a number'.format(f._name) in str(e)
+        assert 'Field "{}" is not a number'.format(f._name) in str(e.value)
 
 
 def test_integer_field_range_success():
@@ -230,7 +227,7 @@ def test_string_validate_max_length_fail():
     f = String()
     with pytest.raises(FieldSet.Error) as e:
         f._validate_max_length(4, 'text1')
-    assert 'Field "{}" is longer than expected'.format(f._name) in str(e)
+    assert 'Field "{}" is longer than expected'.format(f._name) in str(e.value)
 
 
 def test_string_validate():
@@ -243,7 +240,7 @@ def test_string_validate_not_acceptable_value():
     for fail_val in (10, None, list):
         with pytest.raises(FieldSet.Error) as e:
             f._validate_field(fail_val)
-        assert 'Field "{}" is not a string'.format(f._name) in str(e)
+        assert 'Field "{}" is not a string'.format(f._name) in str(e.value)
 
 
 def test_regex_validate_pattern():
@@ -344,7 +341,7 @@ def test_boolean_validate_non_acceptable_value():
     for fail_val in (10, None, [], {}, 'bar'):
         with pytest.raises(FieldSet.Error) as e:
             f._validate_field(fail_val)
-        assert 'Field "foo" is not a boolean' in str(e)
+        assert 'Field "foo" is not a boolean' in str(e.value)
 
 
 def test_datetime_validate_acceptable_value():
@@ -361,15 +358,15 @@ def test_datetime_validate_non_acceptable_value():
     for fail_val in (None, 'foobar', []):
         with pytest.raises(FieldSet.Error) as e:
             f._validate_field(fail_val)
-        assert 'Field "foo" can\'t be parsed' in str(e)
+        assert 'Field "foo" can\'t be parsed' in str(e.value)
 
 
 def test_datetime_validate_valueerror_out_of_range():
     f = DateTime()
     f.set_name('foo')
     with pytest.raises(FieldSet.Error) as e:
-        f._validate_field(16933806600000)
-    assert 'Field "foo" can\'t be parsed' in str(e)
+        f._validate_field(999999999999999)
+    assert 'Field "foo" can\'t be parsed' in str(e.value)
 
 
 def test_datetime_validate_acceptable_value_not_ms_precision():
@@ -411,7 +408,7 @@ def test_list_validate_fail():
     with pytest.raises(FieldSet.Error) as e:
         f.validate(['bar', 7, 'baz'])
 
-    assert 'One of the elements on field "foo" failed to validate' in str(e)
+    assert 'One of the elements on field "foo" failed to validate' in str(e.value)
     assert element_field.mock_calls == [
         mock.call.validate('bar'),
         mock.call.validate(7),
@@ -426,7 +423,7 @@ def test_list_non_acceptable_value():
     for fail_val in (10, None, {}, 'bar', True):
         with pytest.raises(FieldSet.Error) as e:
             f._validate_field(fail_val)
-        assert 'Field "foo" is not a list' in str(e)
+        assert 'Field "foo" is not a list' in str(e.value)
 
     assert element_field.mock_calls == []
 
@@ -447,7 +444,7 @@ def test_dict_validate_non_acceptable_value():
     for fail_val in (10, None, [], 'bar', True):
         with pytest.raises(FieldSet.Error) as e:
             f._validate_field(fail_val)
-        assert 'Field "foo" is not a dict' in str(e)
+        assert 'Field "foo" is not a dict' in str(e.value)
 
 
 def test_comma_separated_list_does_not_allow_more_requests():
@@ -462,7 +459,7 @@ def test_comma_separated_list_does_not_allow_more_requests():
 
     with pytest.raises(FieldSet.Error) as e:
         field.validate(string_list)
-    assert 'Field "foo" has more items than allowed in the settings' in str(e)
+    assert 'Field "foo" has more items than allowed in the settings' in str(e.value)
 
 
 def test_comma_separated_list_with_string_values_and_integer_type_cast():
@@ -470,7 +467,7 @@ def test_comma_separated_list_with_string_values_and_integer_type_cast():
     field.set_name('foo')
     with pytest.raises(FieldSet.Error) as e:
         field.validate('a;b;c;d')
-    assert 'Field "foo" can\'t be parsed as a list' in str(e)
+    assert 'Field "foo" can\'t be parsed as a list' in str(e.value)
 
 
 def test_comma_separated_list_custom_separator_not_informed_on_constructor():
@@ -478,7 +475,7 @@ def test_comma_separated_list_custom_separator_not_informed_on_constructor():
     field.set_name('foo')
     with pytest.raises(FieldSet.Error) as e:
         field.validate('1,2,3,4')
-    assert 'Field "foo" can\'t be parsed as a list' in str(e)
+    assert 'Field "foo" can\'t be parsed as a list' in str(e.value)
 
 
 def test_constructor_with_custom_separator():

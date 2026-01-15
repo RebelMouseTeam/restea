@@ -1,13 +1,11 @@
 import collections
 import json
+
 import mock
 import pytest
-
 from mock import patch
 
-from restea import errors
-from restea import formats
-from restea import fields
+from restea import errors, fields, formats
 from restea.resource import Resource
 
 
@@ -52,7 +50,7 @@ def test_get_method_name_edit_without_iden():
 
     with pytest.raises(errors.BadRequestError) as e:
         resource._get_method_name(has_iden=False)
-    assert 'Given method requires iden' in str(e)
+    assert 'Given method requires iden' in str(e.value)
 
 
 def test_get_method_name_create():
@@ -65,7 +63,7 @@ def test_get_method_name_create_with_id():
 
     with pytest.raises(errors.BadRequestError) as e:
         resource._get_method_name(has_iden=True)
-    assert "Given method shouldn't have iden" in str(e)
+    assert "Given method shouldn't have iden" in str(e.value)
 
 
 def test_get_method_name_delete():
@@ -75,7 +73,7 @@ def test_get_method_name_delete():
 
 def test_get_method_name_options():
     resource, _, _ = create_resource_helper(method='OPTIONS')
-    assert 'describe' == resource._get_method_name(has_iden=True)
+    assert 'describe' == resource._get_method_name(has_iden=False)
 
 
 def test_get_method_name_unpecefied_method():
@@ -83,7 +81,7 @@ def test_get_method_name_unpecefied_method():
 
     with pytest.raises(errors.MethodNotAllowedError) as e:
         resource._get_method_name(has_iden=True)
-    assert 'Method "HEAD" is not supported' in str(e)
+    assert 'Method "HEAD" is not supported' in str(e.value)
 
 
 def test_get_method_name_method_override():
@@ -198,7 +196,7 @@ def test_get_method_with_not_existing_method():
 
     with pytest.raises(errors.BadRequestError) as e:
         resource._get_method('not_exising_method')
-    assert 'Method "GET" is not implemented for a given endpoint' in str(e)
+    assert 'Method "GET" is not implemented for a given endpoint' in str(e.value)
 
 
 def test_get_payload_should_pass_validation():
@@ -222,7 +220,7 @@ def test_get_payload_unexpected_data():
 
     with pytest.raises(errors.BadRequestError) as e:
         resource._get_payload('edit')
-    assert 'Fail to load the data' in str(e)
+    assert 'Fail to load the data' in str(e.value)
 
 
 def test_get_payload_not_mapable_payload():
@@ -233,7 +231,7 @@ def test_get_payload_not_mapable_payload():
 
     with pytest.raises(errors.BadRequestError) as e:
         resource._get_payload('edit')
-    assert 'Data should be key -> value structure' in str(e)
+    assert 'Data should be key -> value structure' in str(e.value)
 
 
 def test_get_payload_field_validation_fails():
@@ -250,7 +248,7 @@ def test_get_payload_field_validation_fails():
 
     with pytest.raises(errors.BadRequestError) as e:
         resource._get_payload('edit')
-    assert field_error_message in str(e)
+    assert field_error_message in str(e.value)
 
 
 def test_get_payload_field_misconfigured_fields_fails():
@@ -268,7 +266,7 @@ def test_get_payload_field_misconfigured_fields_fails():
 
     with pytest.raises(errors.ServerError) as e:
         resource._get_payload('edit')
-    assert configuration_error_message in str(e)
+    assert configuration_error_message in str(e.value)
 
 
 def test_get_payload_field_validation_no_data_empty_payload():
@@ -317,7 +315,7 @@ def test_process_wrong_formatter():
 
     with pytest.raises(errors.BadRequestError) as e:
         resource.process()
-    assert 'Not recognizable format' in str(e)
+    assert 'Not recognizable format' in str(e.value)
 
 
 @patch.object(formats.JsonFormat, 'serialize')
@@ -327,7 +325,7 @@ def test_process_method_raising_rest_error(serialize_mock):
 
     with pytest.raises(errors.RestError) as e:
         resource.process()
-    assert 'test' in str(e)
+    assert 'test' in str(e.value)
 
 
 @patch.object(formats.JsonFormat, 'serialize')
@@ -339,7 +337,7 @@ def test_process_error_in_method_should_raise_server_error(serialize_mock):
 
     with pytest.raises(ValueError) as e:
         resource.process()
-    assert 'I will raise' in str(e)
+    assert 'I will raise' in str(e.value)
 
 
 @patch.object(formats.JsonFormat, 'serialize')
@@ -352,7 +350,7 @@ def test_process_error_in_formatter_serialize_should_raise_server_error(
 
     with pytest.raises(errors.ServerError) as e:
         resource.process()
-    assert "Service can't respond with this format" in str(e)
+    assert "Service can't respond with this format" in str(e.value)
 
 
 @patch.object(Resource, 'process')

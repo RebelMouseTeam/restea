@@ -1,11 +1,9 @@
-import six
-
 from django.http import HttpResponse
 from django.urls import re_path
 
 from restea.adapters.base import (
-    BaseResourceWrapper,
     BaseRequestWrapper,
+    BaseResourceWrapper,
 )
 
 
@@ -63,7 +61,7 @@ class DjangoResourceRouter(BaseResourceWrapper):
             content_type=content_type,
             status=status_code
         )
-        for name, value in six.iteritems(headers):
+        for name, value in headers.items():
             response[name] = value
         return response
 
