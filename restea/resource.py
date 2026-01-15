@@ -1,13 +1,9 @@
-from __future__ import unicode_literals
-
 import collections
 import collections.abc
 
-import six
-
 import restea.errors as errors
-import restea.formats as formats
 import restea.fields as fields
+import restea.formats as formats
 
 
 class Resource(object):
@@ -282,7 +278,7 @@ class Resource(object):
 
     @classmethod
     def _stream_http_method_and_restea_method(cls):
-        for http_method, method_names in six.iteritems(cls.method_map):
+        for http_method, method_names in cls.method_map.items():
             if isinstance(method_names, tuple):
                 for method_name in method_names:
                     yield http_method, method_name

@@ -1,8 +1,5 @@
-import re
 import datetime
-
-import six
-from six.moves import map
+import re
 
 
 class FieldSet(object):
@@ -219,7 +216,7 @@ class String(Field):
         :returns: validated value
         :rtype: str
         '''
-        if not isinstance(field_value, six.string_types):
+        if not isinstance(field_value, str):
             raise FieldSet.Error(
                 'Field "{}" is not a string'.format(self._name)
             )
@@ -242,7 +239,7 @@ class Regex(String):
         least one pattern matches validation is passing
         '''
         res = None
-        if isinstance(option_value, six.string_types):
+        if isinstance(option_value, str):
             res = re.findall(option_value, field_value, re.IGNORECASE)
         else:
             for pattern in option_value:

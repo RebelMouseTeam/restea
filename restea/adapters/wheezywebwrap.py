@@ -1,12 +1,10 @@
-import six
-
 from wheezy.http import HTTPResponse
-from wheezy.routing import url
 from wheezy.http.comp import bton
+from wheezy.routing import url
 
 from restea.adapters.base import (
-    BaseResourceWrapper,
     BaseRequestWrapper,
+    BaseResourceWrapper,
 )
 from restea.errors import BadRequestError
 
@@ -76,7 +74,7 @@ class WheezyResourceRouter(BaseResourceWrapper):
         response = HTTPResponse(content_type=content_type)
         response.write(content)
         response.status_code = status_code
-        for name, value in six.iteritems(headers):
+        for name, value in headers.items():
             response.headers.append((name, value))
         return response
 

@@ -1,1 +1,4 @@
-__version__ = '0.3.10'
+try:
+    from restea._version import __version__
+except ImportError:
+    __version__ = "0.0.0.dev0"

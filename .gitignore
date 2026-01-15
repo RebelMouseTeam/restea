@@ -3,8 +3,11 @@
 .coverage
 htmlcov/*
 MANIFEST
-dist
+dist/
 .cache
-.eggs/*
-build/*
-restea.egg-info/*
+.eggs/
+build/
+*.egg-info/
+.venv/
+.python-version
+restea/_version.py

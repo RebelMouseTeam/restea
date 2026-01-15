@@ -2,9 +2,6 @@ import datetime
 import json
 import time
 
-import six
-
-
 _formatter_registry = {}
 
 
@@ -33,7 +30,7 @@ class FormatterRegistry(type):
             _formatter_registry[cls.name] = cls
 
 
-class BaseFormatter(six.with_metaclass(FormatterRegistry)):
+class BaseFormatter(metaclass=FormatterRegistry):
     '''
     BaseFormatter is base class for different serialization formats
     '''
